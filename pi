@@ -42,4 +42,5 @@ BWRAP_ARGS+=(
   --share-net
 )
 
-exec bwrap "${BWRAP_ARGS[@]}" "$SCRIPT_DIR/node_modules/.bin/pi" "$@"
+exec bwrap "${BWRAP_ARGS[@]}" "$SCRIPT_DIR/node_modules/.bin/pi" \
+  --append-system-prompt "$SCRIPT_DIR/AGENTS.md" "$@"

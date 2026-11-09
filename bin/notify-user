@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# notify-user -- push a progress update to the operator via ntfy.sh.
+#
+# Usage:
+#   notify-user "short one-line message"
+#   printf 'line one\nline two\n' | notify-user          # body from stdin (multi-line)
+#   notify-user -t "Build finished" "details here"       # custom title
+#   notify-user -p high "needs attention now"            # ntfy priority
+#   notify-user -u https://ntfy.sh/other-topic "hello"   # override topic
+#
+# Why this wrapper exists:
+#   - Multi-line bodies: pipe them in. No shell quoting gymnastics, and no
+#     risk of the harness mangling a pasted multi-line argument.
+#   - '--data-raw' is used deliberately. Plain '-d "$BODY"' makes curl treat a
+#     body beginning with '@' as a filename to upload; --data-raw never does.
+#   - Bounded with --max-time so a dead network can never wedge a tool call.
+#
+# Privacy note:
+#   ntfy.sh topics are public to anyone who knows the topic name. Treat this
+#   channel as public. Never put secrets, credentials, or unpublished findings
+#   marked confidential into a notification.
+set -euo pipefail
+
+url="${NTFY_URL:-https://ntfy.sh/fedf0262-pi-agent}"
+title="Daily Worklog Draft"
+priority="default"
+
+usage() {
+  # Print the leading comment block only, so help can never drift out of sync.
+  awk 'NR>1 { if (/^#/) { sub(/^# ?/, ""); print } else exit }' "$0"
+  exit "${1:-0}"
+}
+
+while getopts "t:p:u:h" opt; do
+  case "$opt" in
+    t) title="$OPTARG" ;;
+    p) priority="$OPTARG" ;;
+    u) url="$OPTARG" ;;
+    h) usage 0 ;;
+    *) usage 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+# Body comes from arguments, or stdin when none are given.
+if [ $# -gt 0 ]; then
+  body="$*"
+else
+  body="$(cat)"
+fi
+
+if [ -z "${body//[[:space:]]/}" ]; then
+  echo "notify-user: refusing to send an empty body" >&2
+  exit 2
+fi
+
+# Single-line guard: an HTTP header can never carry a newline.
+case "$title" in
+  *$'\n'*) echo "notify-user: title must be a single line" >&2; exit 2 ;;
+esac
+
+if ! resp="$(curl -sS --max-time 25 \
+    --data-raw "$body" \
+    -H "Title: $title" \
+    -H "Priority: $priority" \
+    "$url")"; then
+  echo "notify-user: delivery failed (curl error)" >&2
+  exit 1
+fi
+
+echo "$resp"
