@@ -20,6 +20,8 @@ BWRAP_ARGS=(
 
 [ -d /lib64 ] && BWRAP_ARGS+=(--ro-bind /lib64 /lib64)
 [ -f /etc/resolv.conf ] && BWRAP_ARGS+=(--ro-bind /etc/resolv.conf /etc/resolv.conf)
+[ -f /etc/passwd ] && BWRAP_ARGS+=(--ro-bind /etc/passwd /etc/passwd)
+[ -f /etc/group ] && BWRAP_ARGS+=(--ro-bind /etc/group /etc/group)
 [ -d /etc/ssl ] && BWRAP_ARGS+=(--ro-bind /etc/ssl /etc/ssl)
 [ -d /etc/alternatives ] && BWRAP_ARGS+=(--ro-bind /etc/alternatives /etc/alternatives)
 
