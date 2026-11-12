@@ -43,6 +43,7 @@ BWRAP_ARGS+=(
   --setenv PATH "$SCRIPT_DIR/bin:$NODE_BIN:/usr/local/bin:/usr/bin:/bin"
   --unshare-all
   --share-net
+  --new-session
 )
 
 exec bwrap "${BWRAP_ARGS[@]}" "$SCRIPT_DIR/node_modules/.bin/pi" \
