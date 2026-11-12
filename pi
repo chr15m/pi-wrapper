@@ -38,9 +38,36 @@ BWRAP_ARGS+=(
 [ -f "$HOME/.gitconfig" ] && BWRAP_ARGS+=(--ro-bind "$HOME/.gitconfig" "$HOME/.gitconfig")
 [ -f "$HOME/.gitignore_global" ] && BWRAP_ARGS+=(--ro-bind "$HOME/.gitignore_global" "$HOME/.gitignore_global")
 
+ENV_WHITELIST=(
+  HOME
+  USER
+  LOGNAME
+  SHELL
+  TERM
+  COLORTERM
+  LANG
+  LANGUAGE
+  PWD
+  ANTHROPIC_API_KEY
+  OPENAI_API_KEY
+  GROQ_API_KEY
+  OPENROUTER_API_KEY
+  REPLICATE_API_TOKEN
+  OLLAMA_API_BASE
+  OLLAMA_BASE_URL
+)
+
 BWRAP_ARGS+=(
+  --clearenv
   --chdir "$TARGET_DIR"
   --setenv PATH "$SCRIPT_DIR/bin:$NODE_BIN:/usr/local/bin:/usr/bin:/bin"
+)
+
+for var in "${ENV_WHITELIST[@]}"; do
+  [ -n "${!var+x}" ] && BWRAP_ARGS+=(--setenv "$var" "${!var}")
+done
+
+BWRAP_ARGS+=(
   --unshare-all
   --share-net
   --new-session
