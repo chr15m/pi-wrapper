@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-TARGET_DIR="$(pwd)"
+TARGET_DIR="$(realpath "$PWD")"
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
@@ -30,10 +30,17 @@ BWRAP_ARGS+=(
   --dev /dev
   --tmpfs /tmp
   --ro-bind "$NODE_DIR" "$NODE_DIR"
-  --bind "$SCRIPT_DIR" "$SCRIPT_DIR"
   --bind "$HOME/.pi" "$HOME/.pi"
-  --bind "$TARGET_DIR" "$TARGET_DIR"
 )
+
+if [ "$TARGET_DIR" = "$SCRIPT_DIR" ]; then
+  BWRAP_ARGS+=(--bind "$SCRIPT_DIR" "$SCRIPT_DIR")
+else
+  BWRAP_ARGS+=(
+    --ro-bind "$SCRIPT_DIR" "$SCRIPT_DIR"
+    --bind "$TARGET_DIR" "$TARGET_DIR"
+  )
+fi
 
 [ -f "$HOME/.gitconfig" ] && BWRAP_ARGS+=(--ro-bind "$HOME/.gitconfig" "$HOME/.gitconfig")
 [ -f "$HOME/.gitignore_global" ] && BWRAP_ARGS+=(--ro-bind "$HOME/.gitignore_global" "$HOME/.gitignore_global")
