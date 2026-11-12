@@ -68,6 +68,7 @@ for var in "${ENV_WHITELIST[@]}"; do
 done
 
 BWRAP_ARGS+=(
+  --die-with-parent
   --unshare-all
   --share-net
   --new-session
